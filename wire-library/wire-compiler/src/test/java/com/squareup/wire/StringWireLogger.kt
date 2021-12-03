@@ -15,39 +15,16 @@
  */
 package com.squareup.wire
 
-import com.squareup.javapoet.JavaFile
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.wire.schema.ProtoType
 import okio.Path
-import io.outfoxx.swiftpoet.FileSpec as SwiftFileSpec
 
-internal class StringWireLogger : WireLogger {
-  private var quiet: Boolean = false
+internal class StringWireLogger : EventListener() {
   private val buffer = StringBuilder()
 
   val log: String get() = buffer.toString()
 
-  override fun setQuiet(quiet: Boolean) {
-    this.quiet = quiet
-  }
-
-  @Synchronized override fun artifact(outputPath: Path, filePath: String) {
-    buffer.append("$outputPath $filePath\n")
-  }
-
-  @Synchronized override fun artifact(outputPath: Path, javaFile: JavaFile) {
-    buffer.append("$outputPath ${javaFile.packageName}.${javaFile.typeSpec.name}\n")
-  }
-
-  @Synchronized override fun artifact(outputPath: Path, kotlinFile: FileSpec) {
-    val typeSpec = kotlinFile.members.single() as TypeSpec
-    buffer.append("$outputPath ${kotlinFile.packageName}.${typeSpec.name}\n")
-  }
-
-  @Synchronized override fun artifact(outputPath: Path, type: ProtoType, swiftFile: SwiftFileSpec) {
-    val typeSpec = swiftFile.members.single() as TypeSpec
-    buffer.append("$outputPath $type ${typeSpec.name}\n")
+  @Synchronized override fun artifactHandled(outputPath: Path, qualifiedName: String) {
+    buffer.append("$outputPath $qualifiedName\n")
   }
 
   override fun artifactSkipped(type: ProtoType) {
@@ -55,8 +32,6 @@ internal class StringWireLogger : WireLogger {
   }
 
   @Synchronized override fun warn(message: String) {
-    if (!quiet) {
-      buffer.append("$message\n")
-    }
+    buffer.append("$message\n")
   }
 }
